@@ -151,13 +151,11 @@ class Assignment3VPN:
                 # Checking if the received message is part of your protocol
                 # TODO: MODIFY THE INPUT ARGUMENTS AND LOGIC IF NECESSARY
                 print(f"message received: {cipher_text}")
-                print(type(cipher_text))
                 if self.prtcl.IsMessagePartOfProtocol(cipher_text):
                     # Disabling the button to prevent repeated clicks
                     self.secureButton["state"] = "disabled"
                     # Processing the protocol message
                     return_message = self.prtcl.ProcessReceivedProtocolMessage(cipher_text, self.sharedSecret.get())
-                    print(f"Return message: {return_message}")
                     if return_message: self.conn.send(return_message)
 
                 # Otherwise, decrypting and showing the messaage
@@ -183,7 +181,6 @@ class Assignment3VPN:
         self.secureButton["state"] = "disabled"
 
         # TODO: THIS IS WHERE YOU SHOULD IMPLEMENT THE START OF YOUR MUTUAL AUTHENTICATION AND KEY ESTABLISHMENT PROTOCOL, MODIFY AS YOU SEEM FIT
-        # print(self.sharedSecret.get()) # Somehow, the shared secret is already initialized here
         init_message = self.prtcl.GetProtocolInitiationMessage()
         self.conn.send(init_message)
 
@@ -267,15 +264,5 @@ class Assignment3VPN:
 
 # Main logic
 if __name__ == '__main__':
-    PROTOCOL = b"PROTOCOL"
-    CLIENT = b"CLNT"
-    SERVER = b"SRVR"
-    SEPERATOR = b"SEPERATORLHKAJSHFKUHDSKJFFK"
-
-    print(type(PROTOCOL + SEPERATOR + CLIENT + SEPERATOR))
-    # print(type(SEPERATOR))
-    # print(bytearray([PROTOCOL, CLIENT, SEPERATOR]))
-    # test_string = "b'\xa5\xd5\xd2\'"
-    # print(bytes(list(test_string)))
     app = Assignment3VPN()
     app.run()
