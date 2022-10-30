@@ -1,5 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
+from base64 import b64encode
+from Crypto.Util.Padding import pad, unpad
 from Crypto import Random
 
 PROTOCOL = b"PROTOCOL"
@@ -131,7 +133,7 @@ class Protocol:
 
                 print(f"Bob's session key: {self._key}")
 
-                return None # mutual authentication and key establishment finished, no need to return anything
+                return None # mutual authentication and key establishment finished, mneed to return anything
 
         raise Exception("Invalid Authentication")
 
@@ -147,17 +149,34 @@ class Protocol:
     # TODO: IMPLEMENT ENCRYPTION WITH THE SESSION KEY (ALSO INCLUDE ANY NECESSARY INFO IN THE ENCRYPTED MESSAGE FOR INTEGRITY PROTECTION)
     # RETURN AN ERROR MESSAGE IF INTEGRITY VERITIFCATION OR AUTHENTICATION FAILS
     def EncryptAndProtectMessage(self, plain_text):
-        if not self._key: return plain_text
-        cipher_text = plain_text
-        return cipher_text
+        key = self._key.to_bytes(32, "big")
+        data = plain_text.encode("utf-8")
+        cipher = AES.new(key, AES.MODE_EAX)
+        cipher_text, tag = cipher.encrypt_and_digest(data)
+        hmac = HMAC.new(key, digestmod=SHA256) 
+        hmac.update(cipher_text)
+        return cipher.nonce + SEPERATOR + cipher_text + SEPERATOR + hmac.digest()
 
 
     # Decrypting and verifying messages
     # TODO: IMPLEMENT DECRYPTION AND INTEGRITY CHECK WITH THE SESSION KEY
     # RETURN AN ERROR MESSAGE IF INTEGRITY VERITIFCATION OR AUTHENTICATION FAILS
     def DecryptAndVerifyMessage(self, cipher_text):
-        if not self._key: return cipher_text
-        plain_text = cipher_text
+        key = self._key.to_bytes(32, "big")
+        hmac = HMAC.new(key, digestmod=SHA256)
+        nonce, data, mac = cipher_text.split(SEPERATOR)
+        try: 
+            hmac.update(data)
+            hmac.verify(mac)
+            print("Message integrity verified")
+        except ValueError: 
+            print("Integrity check failed")
+            return 
+        try: 
+            cipher = AES.new(key, AES.MODE_EAX, nonce)
+            plain_text = cipher.decrypt(data)
+        except (ValueError, KeyError):
+            print("Incorrect decryption")
         return plain_text
 
     def pad_shared_secret(self, shared_secret):
